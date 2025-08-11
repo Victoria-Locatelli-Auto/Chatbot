@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  phone              String?
+  trucks             Truck[]
+  appointments       Appointment[]
+  pointsTransactions PointsTransaction[]
+  redemptions        Redemption[]
+  createdAt          DateTime            @default(now())
+}
+
+model Truck {
+  id           String        @id @default(cuid())
+  vin          String        @unique
+  plate        String        @unique
+  model        String
+  year         Int
+  owner        User          @relation(fields: [ownerId], references: [id])
+  ownerId      String
+  appointments Appointment[]
+}
+
+model Dealership {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  cnpj          String?
+  email         String?
+  phone         String?
+  city          String
+  state         String
+  address       String
+  appointments  Appointment[]
+}
+
+model Appointment {
+  id            String     @id @default(cuid())
+  user          User       @relation(fields: [userId], references: [id])
+  userId        String
+  truck         Truck      @relation(fields: [truckId], references: [id])
+  truckId       String
+  dealership    Dealership @relation(fields: [dealershipId], references: [id])
+  dealershipId  String
+  date          DateTime
+  status        String     // PENDENTE | CONFIRMADO | CONCLUIDO | CANCELADO
+  serviceType   String     // REVISAO | TROCA_OLEO | FREIOS | MOTOR | SUSPENSAO | ELETRICA | OUTROS
+  notes         String?
+  pointsAwarded Int        @default(0)
+  createdAt     DateTime   @default(now())
+}
+
+model Reward {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  description  String?
+  pointsCost   Int
+  active       Boolean      @default(true)
+  redemptions  Redemption[]
+}
+
+model Redemption {
+  id           String    @id @default(cuid())
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String
+  reward       Reward    @relation(fields: [rewardId], references: [id])
+  rewardId     String
+  pointsSpent  Int
+  status       String    @default("PENDENTE") // PENDENTE | ENTREGUE | CANCELADO
+  createdAt    DateTime  @default(now())
+}
+
+model PointsTransaction {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  amount    Int
+  type      String   // EARN | SPEND
+  meta      String?
+  createdAt DateTime @default(now())
+}
